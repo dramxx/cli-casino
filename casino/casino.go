@@ -3,6 +3,7 @@ package casino
 import (
 	"fmt"
 
+	"cli-casino/games/slots"
 	"cli-casino/ui"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -77,6 +78,7 @@ func (m *Model) updateMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		case "slots":
 			m.ActiveGame = GameSlots
+			m.GameModel = slots.NewModel(m.Wallet)
 			return m, nil
 		case "roulette":
 			m.ActiveGame = GameRoulette

@@ -157,7 +157,7 @@ GRAPE      🍇        12           1.5x
 ### Controls
 
 - `SPACE` — spin (deducts bet)
-- `+/-` — adjust bet (min $1, max $100 or 10% of balance)
+- `↑↓` — adjust bet (min $10, max $100 or 10% of balance)
 - `q` — back to menu
 
 ---

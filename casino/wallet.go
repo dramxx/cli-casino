@@ -10,6 +10,14 @@ import (
 
 const StartingBalance = 1000.0
 
+type WalletBackend interface {
+	Bet(amount float64) bool
+	Win(amount float64)
+	Lose(amount float64)
+	CanAfford(amount float64) bool
+	Save() error
+}
+
 type Wallet struct {
 	Balance    float64
 	TotalWon   float64
@@ -65,12 +73,20 @@ func (w *Wallet) Loss(amount float64) {
 	w.TotalLost += amount
 }
 
+func (w *Wallet) Lose(amount float64) {
+	w.TotalLost += amount
+}
+
 func (w *Wallet) IsBroke() bool {
 	return w.Balance <= 0
 }
 
 func (w *Wallet) CanAfford(amount float64) bool {
 	return w.Balance >= amount
+}
+
+func (w *Wallet) GetBalance() float64 {
+	return w.Balance
 }
 
 func (w *Wallet) Save() error {

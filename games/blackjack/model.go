@@ -32,19 +32,19 @@ const (
 )
 
 type Model struct {
-	Wallet      ui.WalletBackend
-	Bet         float64
-	MinBet      float64
-	MaxBet      float64
-	Deck        *Deck
-	PlayerHand  Hand
-	DealerHand  Hand
-	State       GameState
-	Result      GameResult
-	Message     string
-	CanDouble   bool
-	CanSplit    bool
-	rng         *rand.Rand
+	Wallet     ui.WalletBackend
+	Bet        float64
+	MinBet     float64
+	MaxBet     float64
+	Deck       *Deck
+	PlayerHand Hand
+	DealerHand Hand
+	State      GameState
+	Result     GameResult
+	Message    string
+	CanDouble  bool
+	CanSplit   bool
+	rng        *rand.Rand
 }
 
 func NewModel(wallet ui.WalletBackend) *Model {
@@ -95,23 +95,28 @@ func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) handleBettingKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
-	case "up":
-		m.Bet += 10
-		if m.Bet > m.MaxBet {
-			m.Bet = m.MaxBet
+	keyStr := msg.String()
+	isUp := msg.Type == tea.KeyUp || keyStr == "up"
+	isDown := msg.Type == tea.KeyDown || keyStr == "down"
+
+	switch {
+	case isUp:
+		if m.Wallet.GetBalance() >= m.MinBet {
+			m.Bet += 10
+			if m.Bet > m.MaxBet {
+				m.Bet = m.MaxBet
+			}
+			if m.Bet > m.Wallet.GetBalance() {
+				m.Bet = m.Wallet.GetBalance()
+			}
 		}
-		if m.Bet > m.Wallet.GetBalance() {
-			m.Bet = m.Wallet.GetBalance()
+	case isDown:
+		if m.Bet > m.MinBet && m.Wallet.GetBalance() >= m.MinBet {
+			m.Bet -= 10
 		}
-	case "down":
-		m.Bet -= 10
-		if m.Bet < m.MinBet {
-			m.Bet = m.MinBet
-		}
-	case "enter":
+	case msg.Type == tea.KeyEnter || keyStr == "enter":
 		return m.deal()
-	case "q", "esc":
+	case msg.Type == tea.KeyCtrlC || msg.Type == tea.KeyEsc || keyStr == "q" || keyStr == "esc":
 		m.Wallet.Save()
 		return m, tea.Quit
 	}

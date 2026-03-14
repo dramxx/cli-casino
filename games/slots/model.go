@@ -52,21 +52,22 @@ func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	switch msg.String() {
-	case " ":
+	keyStr := msg.String()
+	isUp := msg.Type == tea.KeyUp || keyStr == "up"
+	isDown := msg.Type == tea.KeyDown || keyStr == "down"
+
+	switch {
+	case msg.Type == tea.KeySpace || keyStr == " ":
 		return m.spin()
-	case "up":
-		if m.Bet < m.Wallet.GetBalance() && m.Bet < 100 {
+	case isUp:
+		if m.Wallet.GetBalance() >= 10 && m.Bet < 100 && m.Bet < m.Wallet.GetBalance() {
 			m.Bet += 10
 		}
-		if m.Bet > m.Wallet.GetBalance() {
-			m.Bet = m.Wallet.GetBalance()
-		}
-	case "down":
-		if m.Bet > 10 {
+	case isDown:
+		if m.Bet > 10 && m.Wallet.GetBalance() >= 10 {
 			m.Bet -= 10
 		}
-	case "q", "esc":
+	case msg.Type == tea.KeyCtrlC || msg.Type == tea.KeyEsc || keyStr == "q" || keyStr == "esc":
 		m.Wallet.Save()
 		return m, tea.Quit
 	}

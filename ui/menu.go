@@ -12,6 +12,7 @@ var MenuItems = []MenuItem{
 	{Name: "Blackjack", Description: "Beat the dealer", ID: "blackjack"},
 	{Name: "Video Poker", Description: "Draw to win", ID: "videopoker"},
 	{Name: "Stats", Description: "View your stats", ID: "stats"},
+	{Name: "Rebuy", Description: "Add $1000 to your balance", ID: "rebuy"},
 	{Name: "Quit", Description: "Exit the casino", ID: "quit"},
 }
 

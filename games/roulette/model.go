@@ -369,7 +369,7 @@ func (m *Model) View() string {
 	case SectionDozens:
 		sectionName = "DOZENS"
 	case SectionLowHigh:
-		sectionName = "LOW/HIGH"
+		sectionName = "ZERO/LOW/HIGH"
 	case SectionOutside:
 		sectionName = "OUTSIDE"
 	}

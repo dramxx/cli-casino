@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"cli-casino/ui"
+
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -44,10 +45,6 @@ func NewWallet() *Wallet {
 		TotalLost:  saveData.TotalLost,
 		Sessions:   saveData.Sessions,
 		BiggestWin: saveData.BiggestWin,
-	}
-
-	if wallet.Balance <= 0 {
-		wallet.Balance = StartingBalance
 	}
 
 	return wallet
@@ -111,6 +108,14 @@ func (w *Wallet) Reset() {
 	w.TotalLost = 0
 	w.Sessions = 0
 	w.BiggestWin = 0
+}
+
+func (w *Wallet) Rebuy() bool {
+	if w.Balance < StartingBalance {
+		w.Balance = StartingBalance
+		return true
+	}
+	return false
 }
 
 func (w *Wallet) Render() string {

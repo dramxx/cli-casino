@@ -139,7 +139,7 @@ func RenderBettingTable(bets map[int]float64, section Section, row, col, index i
 	} else {
 		zeroCell = " 0 "
 	}
-	s += "│ " + zeroCell + "  " + lowHighCell(0) + "  " + lowHighCell(1) + "                                              │\n"
+	s += "│ " + zeroCell + "  " + lowHighCell(0) + "  " + lowHighCell(1) + "                           │\n"
 	
 	// Outside bets (EVEN, RED, BLACK, ODD)
 	s += "├────────────────────────────────────────────────┤\n"
@@ -150,7 +150,7 @@ func RenderBettingTable(bets map[int]float64, section Section, row, col, index i
 			s += "  "
 		}
 	}
-	s += "                                   │\n"
+	s += "                  │\n"
 
 	s += "└────────────────────────────────────────────────┘"
 	

@@ -99,6 +99,11 @@ func (m *Model) updateMenu(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		case "stats":
 			m.ActiveGame = GameStats
 			return m, nil
+		case "rebuy":
+			if m.Wallet.Rebuy() {
+				// Rebuy successful
+			}
+			return m, nil
 		}
 	case "q":
 		m.Wallet.Save()

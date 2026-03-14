@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"cli-casino/ui"
+
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -14,6 +15,7 @@ type Section int
 const (
 	SectionMain Section = iota
 	SectionDozens
+	SectionLowHigh
 	SectionOutside
 )
 
@@ -25,6 +27,8 @@ type Model struct {
 	Result    int
 	WheelTick int
 	Section   Section
+	Row       int
+	Col       int
 	Index     int
 	rng       *rand.Rand
 }
@@ -37,7 +41,9 @@ func NewModel(wallet ui.WalletBackend) *Model {
 		Spinning: false,
 		Result:   -1,
 		Section:  SectionMain,
-		Index:    1,
+		Row:      0,
+		Col:      0,
+		Index:    0,
 		rng:      rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
 }
@@ -88,67 +94,117 @@ func (m *Model) handleKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) nextSection() {
-	m.Section = (m.Section + 1) % 3
+	m.Section = (m.Section + 1) % 4
+	m.Row = 0
+	m.Col = 0
 	m.Index = 0
 }
 
 func (m *Model) prevSection() {
-	m.Section = (m.Section + 2) % 3
+	m.Section = (m.Section + 3) % 4
+	m.Row = 0
+	m.Col = 0
 	m.Index = 0
 }
 
 func (m *Model) moveUp() {
 	switch m.Section {
 	case SectionMain:
-		m.Index = (m.Index + 36) % 37
+		if m.Row > 0 {
+			m.Row--
+		}
 	case SectionDozens:
-		m.Index = (m.Index + 2) % 3
+		m.Section = SectionMain
+		m.Row = 2
+	case SectionLowHigh:
+		m.Section = SectionDozens
+		m.Index = 0
 	case SectionOutside:
-		m.Index = (m.Index + 5) % 6
+		m.Section = SectionLowHigh
+		m.Index = 0
 	}
 }
 
 func (m *Model) moveDown() {
 	switch m.Section {
 	case SectionMain:
-		m.Index = (m.Index + 1) % 37
+		if m.Row < 2 {
+			m.Row++
+		} else {
+			m.Section = SectionDozens
+			m.Index = 0
+		}
 	case SectionDozens:
-		m.Index = (m.Index + 1) % 3
+		m.Section = SectionLowHigh
+		m.Index = 0
+	case SectionLowHigh:
+		m.Section = SectionOutside
+		m.Index = 0
 	case SectionOutside:
-		m.Index = (m.Index + 1) % 6
+		return
 	}
 }
 
 func (m *Model) moveLeft() {
 	switch m.Section {
 	case SectionMain:
-		m.Index = (m.Index + 36) % 37
+		if m.Col > 0 {
+			m.Col--
+		}
 	case SectionDozens:
-		m.Index = (m.Index + 2) % 3
+		if m.Index > 0 {
+			m.Index--
+		}
+	case SectionLowHigh:
+		if m.Index > 0 {
+			m.Index--
+		}
 	case SectionOutside:
-		m.Index = (m.Index + 5) % 6
+		if m.Index > 0 {
+			m.Index--
+		}
 	}
 }
 
 func (m *Model) moveRight() {
 	switch m.Section {
 	case SectionMain:
-		m.Index = (m.Index + 1) % 37
+		if m.Col < 11 {
+			m.Col++
+		}
 	case SectionDozens:
-		m.Index = (m.Index + 1) % 3
+		if m.Index < 2 {
+			m.Index++
+		}
+	case SectionLowHigh:
+		if m.Index < 2 {
+			m.Index++
+		}
 	case SectionOutside:
-		m.Index = (m.Index + 1) % 6
+		if m.Index < 3 {
+			m.Index++
+		}
 	}
 }
 
 func (m *Model) getSelected() int {
 	switch m.Section {
 	case SectionMain:
-		return m.Index
+		rows := [][]int{
+			{1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34},
+			{2, 5, 8, 11, 14, 17, 20, 23, 26, 29, 32, 35},
+			{3, 6, 9, 12, 15, 18, 21, 24, 27, 30, 33, 36},
+		}
+		return rows[m.Row][m.Col]
 	case SectionDozens:
 		return 101 + m.Index
+	case SectionLowHigh:
+		// 0, 1-18, 19-36
+		lowHighIds := []int{0, 104, 105}
+		return lowHighIds[m.Index]
 	case SectionOutside:
-		outsideIds := []int{104, 106, 108, 109, 107, 105}
+		// EVEN, RED, BLACK, ODD
+		outsideIds := []int{106, 108, 109, 107}
 		return outsideIds[m.Index]
 	}
 	return 1
@@ -157,12 +213,15 @@ func (m *Model) getSelected() int {
 func (m *Model) getSelectedName() string {
 	switch m.Section {
 	case SectionMain:
-		return fmt.Sprintf("#%d", m.Index)
+		return fmt.Sprintf("#%d", m.getSelected())
 	case SectionDozens:
 		dozens := []string{"1-12", "13-24", "25-36"}
 		return dozens[m.Index]
+	case SectionLowHigh:
+		lowHighNames := []string{"#0", "1-18", "19-36"}
+		return lowHighNames[m.Index]
 	case SectionOutside:
-		outsideNames := []string{"1-18", "EVEN", "RED", "BLACK", "ODD", "19-36"}
+		outsideNames := []string{"EVEN", "RED", "BLACK", "ODD"}
 		return outsideNames[m.Index]
 	}
 	return "#1"
@@ -306,14 +365,17 @@ func (m *Model) View() string {
 
 	// Section indicator
 	sectionName := "MAIN"
-	if m.Section == SectionDozens {
+	switch m.Section {
+	case SectionDozens:
 		sectionName = "DOZENS"
-	} else if m.Section == SectionOutside {
+	case SectionLowHigh:
+		sectionName = "LOW/HIGH"
+	case SectionOutside:
 		sectionName = "OUTSIDE"
 	}
 	s += fmt.Sprintf("[%s] ", sectionName)
 
-	s += RenderBettingTable(m.Bets, m.Section, m.Index) + "\n\n"
+	s += RenderBettingTable(m.Bets, m.Section, m.Row, m.Col, m.Index) + "\n\n"
 
 	s += fmt.Sprintf("Selection: %s  Bet: $%.2f  Total: $%.2f\n", selName, m.Bet, m.totalBets())
 	s += RenderBets(m.Bets) + "\n\n"
